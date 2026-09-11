@@ -10,7 +10,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
     OMP_NUM_THREADS=2 OPENBLAS_NUM_THREADS=1 \
     use_pdl=1 use_dfine=1 use_multi=1
 WORKDIR /app
-COPY requirements.txt .
+COPY requirements.txt requirements.lock ./
 RUN pip install --no-cache-dir -r requirements.txt \
     && groupadd --gid 10002 captcha \
     && useradd --uid 10002 --gid captcha --no-create-home captcha

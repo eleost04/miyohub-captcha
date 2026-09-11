@@ -2,6 +2,7 @@
 **
 !Dockerfile
 !requirements.txt
+!requirements.lock
 !service.py
 !VERSION
 !runtime.sha256
