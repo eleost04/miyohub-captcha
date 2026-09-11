@@ -72,7 +72,7 @@ Models are selected according to the upstream nine-grid/icon challenge type. Fai
 - Temporary images stay in tmpfs and are removed after requests. Access logs are disabled. Challenge values, validation strings, account Cookies and tokens are never logged; only safe outcome/error metadata is retained.
 - CPU threads are bounded and busy-spinning is disabled. The patch fixes second-choice classification, negative wait time, empty detection results and invalid crop boxes.
 
-Linux/amd64 measurements on 2026-09-11: approximately **364.1 MiB** local uncompressed image, **177 MiB** external models and **535 MiB** example idle memory. Compose limits are **2 CPUs / 1536 MiB RAM / 128 PIDs**. Reserve 2 CPUs and 1.5 GiB for this service, or at least 2 CPUs/2 GiB for it and the main app together. Allow additional space for build caches and backups and headroom for peak load. Other architectures have not been runtime-tested.
+Linux/amd64 measurements on 2026-09-11: approximately **364.1 MiB** local uncompressed image, **177 MiB** external models, **352 MiB** idle memory just after startup and **535 MiB** in an earlier running sample. Compose limits are **2 CPUs / 1536 MiB RAM / 128 PIDs**. Reserve 2 CPUs and 1.5 GiB for this service, or at least 2 CPUs/2 GiB for it and the main app together. Allow additional space for build caches and backups and headroom for peak load. Other architectures have not been runtime-tested.
 
 ## Verification and logs
 
