@@ -1,3 +1,9 @@
+FROM python:3.12-slim AS runtime-source
+WORKDIR /source
+COPY upstream/crack.py upstream/crop_image.py upstream/predict.py upstream/mousepath.json upstream/
+COPY runtime.sha256 ./
+RUN sha256sum --check runtime.sha256
+
 FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
     CAPTCHA_MODEL_DIR=/models CAPTCHA_WORK_DIR=/tmp/captcha ORT_THREADS=2 \
@@ -8,7 +14,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt \
     && groupadd --gid 10002 captcha \
     && useradd --uid 10002 --gid captcha --no-create-home captcha
-COPY upstream/crack.py upstream/crop_image.py upstream/predict.py upstream/mousepath.json ./
+COPY --from=runtime-source /source/upstream/ ./
 COPY service.py ./
 USER captcha
 EXPOSE 9645
