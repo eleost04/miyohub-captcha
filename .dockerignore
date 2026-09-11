@@ -1,0 +1,7 @@
+**/.git
+models/
+upstream/img_2_val/
+upstream/img_saved/
+**/__pycache__/
+*.log
+.env*
