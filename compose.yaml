@@ -1,5 +1,8 @@
+name: miyohub-captcha
+
 services:
   captcha:
+    container_name: miyohub-captcha
     build: .
     image: miyohub-captcha:local
     restart: unless-stopped

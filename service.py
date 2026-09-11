@@ -19,7 +19,8 @@ from crack import Crack
 from crop_image import crop_image_v3, validate_path
 import predict
 
-app = FastAPI(title="MiyoHub captcha", docs_url=None, redoc_url=None, openapi_url=None)
+version = Path(__file__).with_name("VERSION").read_text(encoding="utf-8").strip()
+app = FastAPI(title="MiyoHub captcha", version=version, docs_url=None, redoc_url=None, openapi_url=None)
 lock = threading.Lock()
 log = logging.getLogger("captcha")
 log.setLevel(logging.INFO)
@@ -56,9 +57,9 @@ def authorize(authorization):
 @app.get("/healthz")
 def health():
     loaded = [name for name in model_names if getattr(predict, name, None) is not None]
-    if not loaded:
+    if len(loaded) != len(model_names):
         raise HTTPException(status_code=503, detail="models unavailable")
-    return {"ok": True, "models": loaded, "device": "CPU", "max_concurrency": 1}
+    return {"ok": True, "version": version, "models": loaded, "device": "CPU", "max_concurrency": 1}
 
 
 def solve_challenge(gt, challenge, use_v3_model):

@@ -1,7 +1,14 @@
-**/.git
-models/
-upstream/img_2_val/
-upstream/img_saved/
-**/__pycache__/
-*.log
-.env*
+# Allow only the exact files required by Dockerfile.
+**
+!Dockerfile
+!requirements.txt
+!requirements.lock
+!service.py
+!VERSION
+!runtime.sha256
+!upstream/
+upstream/**
+!upstream/crack.py
+!upstream/crop_image.py
+!upstream/predict.py
+!upstream/mousepath.json
