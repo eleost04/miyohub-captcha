@@ -113,6 +113,8 @@ Use `main` for releases, `develop` for validated integration, and focused featur
 
 CI tests authorization, redaction, protocol and concurrency with stub models; it does not fetch weights. Releases check version, branch ancestry and GitHub signature verification, and publish private source releases only. **Docker images are not automatically pushed.**
 
+If a push does not create a test run, manually run `Verify wrapper` from Actions. To recover an interrupted release, run `Publish signed source release` with an existing signed tag. The same signature, branch and test checks apply; existing releases are not overwritten and no live captcha service is called.
+
 Git excludes `upstream/`, `models/`, actual `.env*` files, `docs/`, virtual environments, caches, logs, scratch images, credentials and archives. Docker uses an explicit input allowlist. Do not bypass these boundaries with forced adds.
 
 If distribution is later enabled, prefer private GHCR packages with explicit version tags and external model mounts for both services. Verify third-party usage and redistribution rights first; private publication does not itself grant permission.
