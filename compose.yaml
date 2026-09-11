@@ -1,0 +1,39 @@
+name: miyohub-captcha
+
+services:
+  captcha:
+    container_name: miyohub-captcha
+    build: .
+    image: miyohub-captcha:local
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:9645:9645"
+    environment:
+      CAPTCHA_API_TOKEN: "${CAPTCHA_API_TOKEN:-}"
+      ORT_THREADS: "${ORT_THREADS:-2}"
+    volumes:
+      - ./models:/models:ro
+    read_only: true
+    tmpfs:
+      - /tmp:size=96m,mode=1777
+    cpus: 2
+    mem_limit: 1536m
+    pids_limit: 128
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+    networks:
+      miyohub:
+        aliases:
+          - miyohub-captcha
+
+networks:
+  miyohub:
+    external: true
+    name: miyohub_default

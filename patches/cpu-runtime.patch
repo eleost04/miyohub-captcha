@@ -1,0 +1,124 @@
+diff --git a/crack.py b/crack.py
+index 89be2a5..50c167b 100644
+--- a/crack.py
++++ b/crack.py
+@@ -15,11 +15,11 @@ from cryptography.hazmat.primitives.asymmetric.padding import PKCS1v15
+ logger = logging.getLogger(__name__)
+ 
+ class Crack:
+-    def __init__(self, gt=None, challenge=None):
++    def __init__(self, gt=None, challenge=None, session=None):
+         self.pic_path = None
+         self.s = None
+         self.c = None
+-        self.session = httpx.Client(http2=True)
++        self.session = session if session is not None else httpx.Client(http2=True, timeout=10)
+         self.session.headers = {
+             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+         }
+diff --git a/crop_image.py b/crop_image.py
+index 706371f..2cb3ca0 100644
+--- a/crop_image.py
++++ b/crop_image.py
+@@ -2,7 +2,7 @@ from PIL import Image, ImageFont, ImageDraw, ImageOps
+ from io import BytesIO
+ import numpy as np
+ import os
+-current_path = os.getcwd()
++current_path = os.environ.get('CAPTCHA_WORK_DIR', os.getcwd())
+ validate_path = os.path.join(current_path,'img_2_val')#要验证的图片暂存
+ save_path = os.path.join(current_path,'img_saved')#存放历史图片，留作做数据集以待标记
+ save_pass_path = os.path.join(save_path,'img_pass')#校验失败的图片，可能是轨迹有误，不一定是分类错误
+diff --git a/predict.py b/predict.py
+index 137beea..906c672 100644
+--- a/predict.py
++++ b/predict.py
+@@ -89,13 +89,23 @@ def predict(icon_image, bg_image):
+     logger.info(largest_three)
+     logger.info("识别完成，耗时:", time.time() - start)
+ 
++def cpu_session(name):
++    options = ort.SessionOptions()
++    options.intra_op_num_threads = max(1, min(4, int(os.getenv('ORT_THREADS', '2'))))
++    options.inter_op_num_threads = 1
++    options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
++    options.add_session_config_entry('session.intra_op.allow_spinning', '0')
++    options.add_session_config_entry('session.inter_op.allow_spinning', '0')
++    model_dir = os.getenv('CAPTCHA_MODEL_DIR', os.path.join(os.path.dirname(__file__), 'model'))
++    return ort.InferenceSession(os.path.join(model_dir, name), sess_options=options, providers=['CPUExecutionProvider'])
++
+ def load_model(name='PP-HGNetV2-B4.onnx'):
+     # 加载onnx模型
+     global session,input_name
+     start = time.time()
+     current_dir = os.path.dirname(os.path.abspath(__file__))
+     model_path = os.path.join(current_dir, 'model', name)
+-    session = ort.InferenceSession(model_path)
++    session = cpu_session(name)
+     input_name = session.get_inputs()[0].name
+     logger.info(f"加载{name}模型，耗时:{time.time() - start}")
+ 
+@@ -105,7 +115,7 @@ def load_dfine_model(name='d-fine-n.onnx'):
+     start = time.time()
+     current_dir = os.path.dirname(os.path.abspath(__file__))
+     model_path = os.path.join(current_dir, 'model', name)
+-    session_dfine = ort.InferenceSession(model_path)
++    session_dfine = cpu_session(name)
+     logger.info(f"加载{name}模型，耗时:{time.time() - start}")
+ 
+ def load_yolo11n(name='yolo11n.onnx'):
+@@ -113,7 +123,7 @@ def load_yolo11n(name='yolo11n.onnx'):
+     start = time.time()
+     current_dir = os.path.dirname(os.path.abspath(__file__))
+     model_path = os.path.join(current_dir, 'model', name)
+-    session_yolo11n = ort.InferenceSession(model_path)
++    session_yolo11n = cpu_session(name)
+     logger.info(f"加载{name}模型，耗时:{time.time() - start}")
+ 
+ def load_dinov3(name='dinov3-small.onnx'):
+@@ -121,7 +131,7 @@ def load_dinov3(name='dinov3-small.onnx'):
+     start = time.time()
+     current_dir = os.path.dirname(os.path.abspath(__file__))
+     model_path = os.path.join(current_dir, 'model', name)
+-    session_dino3 = ort.InferenceSession(model_path)
++    session_dino3 = cpu_session(name)
+     logger.info(f"加载{name}模型，耗时:{time.time() - start}")
+ 
+ def load_dino_classify(name='atten.onnx'):
+@@ -129,7 +139,7 @@ def load_dino_classify(name='atten.onnx'):
+     start = time.time()
+     current_dir = os.path.dirname(os.path.abspath(__file__))
+     model_path = os.path.join(current_dir, 'model', name)
+-    session_dino_cf = ort.InferenceSession(model_path)
++    session_dino_cf = cpu_session(name)
+     logger.info(f"加载{name}模型，耗时:{time.time() - start}")
+ 
+ def predict_onnx(icon_image, bg_image, point = None):
+@@ -251,7 +261,7 @@ def predict_onnx_pdl(images_path):
+     answer = [coordinates[index] for index in range(9) if result[index] == target]
+     if len(answer) == 0:
+         all_sort =[np.argsort(one) for one in outputs]
+-        answer = [coordinates[index] for index in range(9) if all_sort[index][1] == target]
++        answer = [coordinates[index] for index in range(9) if all_sort[index][-2] == target]
+     logger.info(f"识别完成{answer}，耗时: {time.time() - start}")
+     with open(os.path.join(images_path,"nine.jpg"),'rb') as f:
+         bg_image = f.read()
+@@ -541,12 +551,17 @@ def predict_onnx_yolo(image):
+     im_data = np.expand_dims(im_data, axis=0)
+     res = session_yolo11n.run(None,{"images":im_data})
+     results = filter_Detections(res)
++    if results.size == 0:
++        return {"top": [], "bottom": []}
+     rescaled_results, confidences = rescale_back(results,im_pil.size[0],im_pil.size[1])
+     images = {"top":[],"bottom":[]}
+     for r, conf in zip(rescaled_results, confidences):
+         x1,y1,x2,y2, cls_id = r
+         cls_id = int(cls_id)
+-        x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
++        x1, y1 = max(0, int(x1)), max(0, int(y1))
++        x2, y2 = min(im_pil.width, int(x2)), min(im_pil.height, int(y2))
++        if x2 <= x1 or y2 <= y1:
++            continue
+         cropped_image = im_pil.crop((x1, y1, x2, y2))
+         if cls_id == 0:
+             images['top'].append({"image":cropped_image,"bbox":[x1, y1, x2, y2]})

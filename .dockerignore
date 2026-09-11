@@ -1,0 +1,14 @@
+# Allow only the exact files required by Dockerfile.
+**
+!Dockerfile
+!requirements.txt
+!requirements.lock
+!service.py
+!VERSION
+!runtime.sha256
+!upstream/
+upstream/**
+!upstream/crack.py
+!upstream/crop_image.py
+!upstream/predict.py
+!upstream/mousepath.json
