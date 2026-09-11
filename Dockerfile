@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt \
     && groupadd --gid 10002 captcha \
     && useradd --uid 10002 --gid captcha --no-create-home captcha
 COPY --from=runtime-source /source/upstream/ ./
-COPY service.py ./
+COPY service.py VERSION ./
 USER captcha
 EXPOSE 9645
 HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \

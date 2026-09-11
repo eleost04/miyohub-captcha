@@ -26,9 +26,14 @@ class ServiceTests(unittest.TestCase):
     def test_health_and_all_cpu_models(self):
         response = self.client.get("/healthz")
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["version"], service.version)
         self.assertEqual(len(response.json()["models"]), 5)
         for name in service.model_names:
             self.assertEqual(getattr(service.predict, name).get_providers(), ["CPUExecutionProvider"])
+
+    def test_partial_models_are_not_healthy(self):
+        with patch.object(service.predict, "session_dino_cf", None):
+            self.assertEqual(self.client.get("/healthz").status_code, 503)
 
     def test_invalid_inputs_never_call_upstream(self):
         with patch.object(service, "solve_challenge") as solve:
