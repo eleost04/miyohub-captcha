@@ -1,0 +1,16 @@
+# Allow files required by Dockerfile.standalone including models.
+**
+!Dockerfile.standalone
+!requirements.txt
+!requirements.lock
+!service.py
+!VERSION
+!runtime.sha256
+!upstream/
+upstream/**
+!upstream/crack.py
+!upstream/crop_image.py
+!upstream/predict.py
+!upstream/mousepath.json
+!models
+!models/**

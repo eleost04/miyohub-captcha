@@ -3,16 +3,23 @@ name: miyohub-captcha
 services:
   captcha:
     container_name: miyohub-captcha
-    build: .
-    image: miyohub-captcha:local
+    image: eleost/miyohub-captcha:latest
     restart: unless-stopped
     ports:
-      - "127.0.0.1:9645:9645"
+      - "${CAPTCHA_BIND_ADDR:-127.0.0.1}:${CAPTCHA_PORT:-9645}:9645"
     environment:
       CAPTCHA_API_TOKEN: "${CAPTCHA_API_TOKEN:-}"
       ORT_THREADS: "${ORT_THREADS:-2}"
-    volumes:
-      - ./models:/models:ro
+      OMP_NUM_THREADS: "${OMP_NUM_THREADS:-2}"
+      OPENBLAS_NUM_THREADS: "${OPENBLAS_NUM_THREADS:-1}"
+      CAPTCHA_MODEL_DIR: "${CAPTCHA_MODEL_DIR:-/models}"
+      CAPTCHA_WORK_DIR: "${CAPTCHA_WORK_DIR:-/tmp/captcha}"
+      use_pdl: "${use_pdl:-1}"
+      use_dfine: "${use_dfine:-1}"
+      use_multi: "${use_multi:-1}"
+    # 镜像内已内置全部 5 个 ONNX 模型。如需外部覆盖模型，可取消下面注释：
+    # volumes:
+    #   - ./models:/models:ro
     read_only: true
     tmpfs:
       - /tmp:size=96m,mode=1777
@@ -28,12 +35,11 @@ services:
       options:
         max-size: "5m"
         max-file: "2"
-    networks:
-      miyohub:
-        aliases:
-          - miyohub-captcha
+    # 如果与 MiyoHub 容器运行在同一台主机，并希望通过 Docker 内部网络通信，可取消以下注释：
+    # networks:
+    #   - default
+    #   - miyohub_default
 
-networks:
-  miyohub:
-    external: true
-    name: miyohub_default
+# networks:
+#   miyohub_default:
+#     external: true
